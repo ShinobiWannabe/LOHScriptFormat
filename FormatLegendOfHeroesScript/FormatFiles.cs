@@ -31,12 +31,12 @@ namespace FormatLegendOfHeroesScript
                     //string filename = @"C:\Users\Michael\Documents\visual studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\bin\Debug\netcoreapp1.1\T_131.DAT";
                     //string filenameOut = @".\bin\Debug\netcoreapp1.1\out\T_131.txt";
                     string filenameOut = fi.DirectoryName + @"\out\" + fi.Name;
-                   DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
+                    DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
 
                     string replacedByteArray;
-                    replacedByteArray = "FILENAME,GAME_SPEACHBLOCK\n";
+
                     // replacedByteArray = GetModifiedFile(fi);
-                    replacedByteArray = GetRegexModifiedFile(fi);
+                    replacedByteArray = GetModifiedFile(fi);
                     CreateFile(filenameOut, replacedByteArray);
                 }
             }
@@ -47,10 +47,11 @@ namespace FormatLegendOfHeroesScript
         }
 
 
-        private static string GetRegexModifiedFile(FileInfo fileInfo)
+        private static string GetModifiedFile(FileInfo fileInfo)
         {
             string replacedByteArray =string.Empty ;
             List<string> speachBlocks =new List<string>();
+            string replacedByteArray = "Filename,Speaker,Game_TextBlock,NoSpeaker_TextBlock\n";
             using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
             {
                 using (StreamReader sr = new StreamReader(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
@@ -69,24 +70,35 @@ namespace FormatLegendOfHeroesScript
 
                     //string pattern = "GAME_TEXTBLOCKEND; 
                     string temp;
-                    
-                        string line = string.Empty; //= (string)sr.ReadLine();
-                    while (!sr.EndOfStream )
+
+                    string line = string.Empty; //= (string)sr.ReadLine();
+                    while (!sr.EndOfStream)
                     {
-                      
 
 
-                         char chr = (char)sr.Read();
+                        int speakerIndex = -1;
+                        char chr = (char)sr.Read();
                         line += chr;
                         //speachBlocks.Add(line);
                         if (chr == GAME_TEXTBLOCKEND)
                         {
 
                             //maybe input a comma on 0x0401. which seems to be after the top of the text block indicating who is speaking. 
-                            replacedByteArray += fileInfo.Name + ",";
-                            replacedByteArray += line;
+                            replacedByteArray += fileInfo.Name + COMMA;
+                            speakerIndex = line.IndexOf((char)(0x04));
+
+
+                            replacedByteArray += speakerIndex > -1 ? line.Substring(0, speakerIndex + 1) : string.Empty; // get speaker, and add to array
+                            replacedByteArray += COMMA;
+
+                            replacedByteArray += line; //full line with speaker.
+                            replacedByteArray += COMMA;
+
+                            replacedByteArray += speakerIndex > -1 ? line.Substring(speakerIndex, line.Length - speakerIndex) : line;    //get line without speaker.         //line without speaker
                             replacedByteArray += NEWLINE;
+
                             line = string.Empty;
+                            speakerIndex = -1;
                         }
 
                     }
@@ -95,54 +107,9 @@ namespace FormatLegendOfHeroesScript
                     // replacedByteArray = replacedByteArray.Replace((char)0x01, (char)0x0D); //if you try and have 4 hex digits as a character it will not work for shift-jis
                     //replacedByteArray = replacedByteArray.Replace(((char)0x1E).ToString(), twoLinebreaks);//org
                     // replacedByteArray = replacedByteArray.Replace(((char)0x1E), (char)0x2C); //best looking so far
-                   // replacedByteArray = replacedByteArray.Replace(GAME_TEXTBLOCKEND, COMMA);
+                    // replacedByteArray = replacedByteArray.Replace(GAME_TEXTBLOCKEND, COMMA);
 
 
-
-
-
-                }
-            }
-            
-            return replacedByteArray ;
-        }
-
-
-        private static string GetModifiedFile(FileInfo fileInfo)
-        {
-            string replacedByteArray;
-            using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
-            {
-                using (StreamReader sr = new StreamReader(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
-                {
-
-  //0x1E is a new block of text
-                    //0x01 is a line end
-                    //0x0D is a newline
-                    //0x000000ffff00 seems to indicate the end of the text section.
-
-                    //so from 0x1e to 0x1e is a text section.  Can open this is Open Office Calc.  Using Shift JIS and separate by commas.
-
-                    //replacedByteArray = sr.ReadToEnd().Replace((char)0x00, (char)0xE1);
-                    // replacedByteArray = sr.ReadToEnd();
-                    //replacedByteArray = sr.ReadToEnd().Replace((char)0x00, (char)0x0D); //works
-
-                    string twoLinebreaks = NEWLINE.ToString();
-                    twoLinebreaks += twoLinebreaks;
-
-                    string commaAndNewLine = COMMA.ToString() + NEWLINE.ToString();
-
-
-
-                    replacedByteArray = sr.ReadToEnd();
-
-                    //org
-                    // replacedByteArray = replacedByteArray.Replace((char)0x01, (char)0x0D); //if you try and have 4 hex digits as a character it will not work for shift-jis
-                    //replacedByteArray = replacedByteArray.Replace(((char)0x1E).ToString(), twoLinebreaks);//org
-                    // replacedByteArray = replacedByteArray.Replace(((char)0x1E), (char)0x2C); //best looking so far
-                    replacedByteArray = replacedByteArray.Replace(GAME_TEXTBLOCKEND, COMMA);
-
-                    
 
 
 
@@ -151,6 +118,51 @@ namespace FormatLegendOfHeroesScript
 
             return replacedByteArray;
         }
+
+
+        //private static string GetModifiedFile(FileInfo fileInfo)
+        //{
+        //    string replacedByteArray;
+        //    using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
+        //    {
+        //        using (StreamReader sr = new StreamReader(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
+        //        {
+
+        //            //0x1E is a new block of text
+        //            //0x01 is a line end
+        //            //0x0D is a newline
+        //            //0x000000ffff00 seems to indicate the end of the text section.
+
+        //            //so from 0x1e to 0x1e is a text section.  Can open this is Open Office Calc.  Using Shift JIS and separate by commas.
+
+        //            //replacedByteArray = sr.ReadToEnd().Replace((char)0x00, (char)0xE1);
+        //            // replacedByteArray = sr.ReadToEnd();
+        //            //replacedByteArray = sr.ReadToEnd().Replace((char)0x00, (char)0x0D); //works
+
+        //            string twoLinebreaks = NEWLINE.ToString();
+        //            twoLinebreaks += twoLinebreaks;
+
+        //            string commaAndNewLine = COMMA.ToString() + NEWLINE.ToString();
+
+
+
+        //            replacedByteArray = sr.ReadToEnd();
+
+        //            //org
+        //            // replacedByteArray = replacedByteArray.Replace((char)0x01, (char)0x0D); //if you try and have 4 hex digits as a character it will not work for shift-jis
+        //            //replacedByteArray = replacedByteArray.Replace(((char)0x1E).ToString(), twoLinebreaks);//org
+        //            // replacedByteArray = replacedByteArray.Replace(((char)0x1E), (char)0x2C); //best looking so far
+        //            replacedByteArray = replacedByteArray.Replace(GAME_TEXTBLOCKEND, COMMA);
+
+
+
+
+
+        //        }
+        //    }
+
+        //    return replacedByteArray;
+        //}
 
         private static void CreateFile(string filenameOut, string replacedByteArray)
         {
