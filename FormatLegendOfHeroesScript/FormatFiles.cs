@@ -33,18 +33,20 @@ namespace FormatLegendOfHeroesScript
                 //DirectoryInfo di = new DirectoryInfo(@".\");
                 //string output = "Filename,Speaker,Game_TextBlock,NoSpeaker_TextBlock\n";
                 //string output = @"Filename|Speaker|Game_TextBlock|NoSpeaker_TextBlock\n";
-                string output = @"""Filename""|""Speaker""|""Game_TextBlock""|""NoSpeaker_TextBlock""\n";
+                string columns = @"""Filename""|""Position""|""Speaker""|""Game_TextBlock""|""NoSpeaker_TextBlock""\n";
                 DeleteOutputIfExists(di);
 
+                List<Byte> output =new List<Byte>();
+                //output.Add(columns.);
                 foreach (FileInfo fi in di.EnumerateFiles("*.Dat"))
                 {
 
                     DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
                     // DirectoryInfo dirOut = new DirectoryInfo(@".\out\");
                     //string replacedByteArray;
-                    output += GetModifiedFile(fi);
-                    WriteFile(fi.DirectoryName + @"\out\output.csv", output);
-                    output = string.Empty;
+                    output= (GetModifiedFile(fi));
+                    //WriteFile(fi.DirectoryName + @"\out\output.csv", output);
+                   // output = string.Empty;
                 }
             }
             catch (Exception)
@@ -66,57 +68,127 @@ namespace FormatLegendOfHeroesScript
 
         }
 
-        private static string GetModifiedFile(FileInfo fileInfo)
+        //While this is more complicated that dealing wth StreamReader, it allows me to get the positions. 
+        private static List<Byte> GetModifiedFile(FileInfo fileInfo)
         {
-            string output = string.Empty;
+            List<Byte> output =  new List<byte>();
+            //List<Byte[]> fsLines = new List<Byte[]>();
+
+
             using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
             {
-                using (StreamReader sr = new StreamReader(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
+               
+                int speakerIndex = -1;
+                List<Byte> line = new List<Byte>();
+                Boolean skippedFirst = false; //this alone removes tons of garbage from the .dat file
+                int fsPos = 0;
+                int outputPos = 0;
+
+                while (fs.Position != fs.Length)
                 {
-                    int speakerIndex = -1;
-                    string line = string.Empty;
-                    Boolean skippedFirst = false; //this alone removes tons of garbage from the .dat file
-                    int pos = 0;
-                    while (!sr.EndOfStream)
+                    Byte fsByte = (byte)fs.ReadByte();
+                    line.Add(fsByte);
+                    fsPos++;
+
+                    speakerIndex = -1;
+
+                    if (fsByte == (Byte)GAME_TEXTBLOCKEND)  //use this if something is blantantly wrong with the below check.
+                                                            //if ((char)((chr) & 0xF0) == (char)(0x00) && fs.) == GAME_TEXTBLOCKEND) //filestream does not support Peek() //0x1E's PREVIOUS byte seems to always follow the format of 0x0F, where the high byte is 0.  This removes lots of bogus shit.
                     {
-                        char chr = (char)sr.Read();
-                        line += chr;
-                        speakerIndex = -1;
-
-                       // if (chr == GAME_TEXTBLOCKEND)  //use this if something is blantantly wrong with the below check.
-                         if ( (char)((chr) & 0xF0) == (char)(0x00) && sr.Peek() ==  GAME_TEXTBLOCKEND) //0x1E's PREVIOUS byte seems to always follow the format of 0x0F, where the high byte is 0.  This removes lots of bogus shit.
+                        if (skippedFirst == false) //the beginning of every file has garbage.
                         {
-                            if(skippedFirst==false) //the beginning of every file has garbage.
-                            {
-                                line = string.Empty;
-                                speakerIndex = -1;
-                                skippedFirst = true;
-                                continue;
-                            }
-                            //maybe input a comma on 0x0401. which seems to be after the top of the text block indicating who is speaking. 
-                            //if (line.Contains((string)(0x0A00).ToString()))
-                            //{
-                            //    Console.Write("empty");
-                            //}
-                            speakerIndex = line.IndexOf((char)(0x04));
-
-                            output = GetFileName(fileInfo, output);
-                            output = GetSpeaker(output, line, speakerIndex);
-                            output = GetLine(output, line);
-                            output = GetLineWithoutSpeaker(output, line, speakerIndex);
-
-                            output += NEWLINE;
-
-                            line = string.Empty;
+                            line.Clear();
+                            
                             speakerIndex = -1;
+                            skippedFirst = true;
+                            continue;
                         }
+
+                        speakerIndex = line.IndexOf((Byte)(0x04));
+
+                      
+
+                       
+                        // line = GetFileName(fileInfo, output);
+                        // output = GetPos(output, fsPos - line.Length, fsPos, outputPos);
+                        //   line = GetSpeaker(output, line, speakerIndex);
+                        line= GetLine( line, fsPos);
+                        //  output = GetLineWithoutSpeaker(output, line, speakerIndex);
+                        line.Add((byte)NEWLINE);
+                        output.AddRange(line.ToArray());
+
+                        line.Clear();                        
+                        speakerIndex = -1;
+                        
                     }
 
                 }
             }
+            DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
+            using (FileStream fs = new FileStream(dirOut.FullName  + @"\output.csv", FileMode.Append))
+            {
+                
+                    fs.Write(output.ToArray(),0,output.Count );
+            }
 
-            return output;
+                return output;
         }
+
+        ////Uses streamreader.  Cannot be used to get position due to characters not being consistent with byte length.
+        //private static string GetModifiedFile(FileInfo fileInfo)
+        //{
+        //    string output = string.Empty;
+        //    using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
+        //    {
+        //        using (StreamReader sr = new StreamReader(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
+        //        {
+        //            int speakerIndex = -1;
+        //            string line = string.Empty;
+        //            Boolean skippedFirst = false; //this alone removes tons of garbage from the .dat file
+        //            int pos = 0;
+        //            while (!sr.EndOfStream)
+        //            {
+        //                char chr = (char)sr.Read();
+        //                pos++; //this is not going to work.  characters can be multiple characters.
+        //                line += chr;
+        //                speakerIndex = -1;
+
+        //               // if (chr == GAME_TEXTBLOCKEND)  //use this if something is blantantly wrong with the below check.
+        //                 if ( (char)((chr) & 0xF0) == (char)(0x00) && sr.Peek() ==  GAME_TEXTBLOCKEND) //0x1E's PREVIOUS byte seems to always follow the format of 0x0F, where the high byte is 0.  This removes lots of bogus shit.
+        //                {
+        //                    if(skippedFirst==false) //the beginning of every file has garbage.
+        //                    {
+        //                        line = string.Empty;
+        //                        speakerIndex = -1;
+        //                        skippedFirst = true;
+        //                        continue;
+        //                    }
+        //                    //maybe input a comma on 0x0401. which seems to be after the top of the text block indicating who is speaking. 
+        //                    //if (line.Contains((string)(0x0A00).ToString()))
+        //                    //{
+        //                    //    Console.Write("empty");
+        //                    //}
+        //                    speakerIndex = line.IndexOf((char)(0x04));
+
+        //                   // line.CopyTo(new Byte[])
+        //                    output = GetFileName(fileInfo, output);
+        //                    output = GetPos(output, pos - System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(line).Length);
+        //                    output = GetSpeaker(output, line, speakerIndex);
+        //                    output = GetLine(output, line);
+        //                    output = GetLineWithoutSpeaker(output, line, speakerIndex);
+
+        //                    output += NEWLINE;
+
+        //                    line = string.Empty;
+        //                    speakerIndex = -1;
+        //                }
+        //            }
+
+        //        }
+        //    }
+
+        //    return output;
+        //}
 
         private static string GetFileName(FileInfo fileInfo, string output)
         {
@@ -127,6 +199,38 @@ namespace FormatLegendOfHeroesScript
             return output;
         }
 
+
+        private static List<Byte> GetFileName(FileInfo fileInfo, List<Byte> output, ref int pos)
+        {
+            output[pos] = (byte)QUALIFIER;
+
+            //output += fileInfo.Name;
+            //output += QUALIFIER;
+            //output += DELIMITER;
+            return output;
+        }
+
+
+        private static string GetPos(string output, int pos)
+        {
+            output += QUALIFIER;
+            output += pos.ToString();
+            output += QUALIFIER;
+            output += DELIMITER;
+            return output;
+        }
+
+
+        private byte[] GetPos(byte[] output, int pos)
+        {
+            //output += QUALIFIER;
+            //output += pos.ToString();
+            //output += QUALIFIER;
+            //output += DELIMITER;
+            return output;
+        }
+
+
         private static string GetSpeaker(string output, string line, int speakerIndex)
         {
             output += QUALIFIER;
@@ -136,7 +240,6 @@ namespace FormatLegendOfHeroesScript
             return output;
         }
 
-
         private static string GetLine(string output, string line)
         {
             output += QUALIFIER;
@@ -144,6 +247,16 @@ namespace FormatLegendOfHeroesScript
             output += QUALIFIER;
             output += DELIMITER;
             return output;
+        }
+
+
+        private static List<Byte> GetLine(List<Byte> line, int pos)
+        {
+            line.Insert(0, (Byte)QUALIFIER);       
+            line.Add((Byte)QUALIFIER);
+            line.Add((Byte)DELIMITER);
+           
+            return line;
         }
 
         private static string GetLineWithoutSpeaker(string output, string line, int speakerIndex)
