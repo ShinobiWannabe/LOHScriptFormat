@@ -8,7 +8,7 @@ namespace FormatLegendOfHeroesScript
 {
     class FormatFiles
     {
-       
+
         //const char DELIMITER = (char)0x2C; //COMMA, not as good as the pipe
         const char DELIMITER = (char)0x7C; //Vertical Line aka Pipe '|'
         const char QUALIFIER = (char)0x22; //Quote '"'
@@ -27,9 +27,9 @@ namespace FormatLegendOfHeroesScript
                 //https://www.nuget.org/packages/System.Text.Encoding.CodePages/
 
                 //need to find how to output also to windows and I guess linux and mac.  Seems to be a way of doing this for whomever may want to use this an a utility.
-               // Console.Writeline("Paste folder directory)
+                // Console.Writeline("Paste folder directory)
                 //String s = Console.ReadLine();
-                 DirectoryInfo di = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\");
+                DirectoryInfo di = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\");
                 //DirectoryInfo di = new DirectoryInfo(@".\");
                 //string output = "Filename,Speaker,Game_TextBlock,NoSpeaker_TextBlock\n";
                 //string output = @"Filename|Speaker|Game_TextBlock|NoSpeaker_TextBlock\n";
@@ -38,11 +38,11 @@ namespace FormatLegendOfHeroesScript
 
                 foreach (FileInfo fi in di.EnumerateFiles("*.Dat"))
                 {
-                   
+
                     DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
-                   // DirectoryInfo dirOut = new DirectoryInfo(@".\out\");
+                    // DirectoryInfo dirOut = new DirectoryInfo(@".\out\");
                     //string replacedByteArray;
-                    output += GetModifiedFile(fi);                    
+                    output += GetModifiedFile(fi);
                     WriteFile(fi.DirectoryName + @"\out\output.csv", output);
                     output = string.Empty;
                 }
@@ -63,7 +63,7 @@ namespace FormatLegendOfHeroesScript
             {
                 Console.WriteLine("output.csv exists and is probably in use. Cannot delete to overwrite.");
             }
-          
+
         }
 
         private static string GetModifiedFile(FileInfo fileInfo)
@@ -75,14 +75,29 @@ namespace FormatLegendOfHeroesScript
                 {
                     int speakerIndex = -1;
                     string line = string.Empty;
+                    Boolean skippedFirst = false; //this alone removes tons of garbage from the .dat file
+                    int pos = 0;
                     while (!sr.EndOfStream)
                     {
                         char chr = (char)sr.Read();
                         line += chr;
                         speakerIndex = -1;
-                        if (chr == GAME_TEXTBLOCKEND)
+
+                       // if (chr == GAME_TEXTBLOCKEND)  //use this if something is blantantly wrong with the below check.
+                         if ( (char)((chr) & 0xF0) == (char)(0x00) && sr.Peek() ==  GAME_TEXTBLOCKEND) //0x1E's PREVIOUS byte seems to always follow the format of 0x0F, where the high byte is 0.  This removes lots of bogus shit.
                         {
+                            if(skippedFirst==false) //the beginning of every file has garbage.
+                            {
+                                line = string.Empty;
+                                speakerIndex = -1;
+                                skippedFirst = true;
+                                continue;
+                            }
                             //maybe input a comma on 0x0401. which seems to be after the top of the text block indicating who is speaking. 
+                            //if (line.Contains((string)(0x0A00).ToString()))
+                            //{
+                            //    Console.Write("empty");
+                            //}
                             speakerIndex = line.IndexOf((char)(0x04));
 
                             output = GetFileName(fileInfo, output);
@@ -141,7 +156,7 @@ namespace FormatLegendOfHeroesScript
         }
 
         private static void WriteFile(string filenameOut, string output)
-        {       
+        {
             using (FileStream fs = new FileStream(filenameOut, FileMode.Append))
             using (StreamWriter sw = new StreamWriter(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
             {
