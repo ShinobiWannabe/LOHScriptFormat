@@ -8,7 +8,10 @@ namespace FormatLegendOfHeroesScript
 {
     class FormatFiles
     {
-        const char COMMA = (char)0x2C;
+       
+        //const char DELIMITER = (char)0x2C; //COMMA, not as good as the pipe
+        const char DELIMITER = (char)0x7C; //Vertical Line aka Pipe '|'
+        const char QUALIFIER = (char)0x22; //Quote '"'
         const char NEWLINE = (char)0x0D;
 
         const char GAME_NEWLINE = (char)0x01;
@@ -23,17 +26,21 @@ namespace FormatLegendOfHeroesScript
                 //https://msdn.microsoft.com/en-us/library/system.text.encoding.codepage(v=vs.110).aspx#See Also
                 //https://www.nuget.org/packages/System.Text.Encoding.CodePages/
 
-                DirectoryInfo di = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\");
-
-                string output = "Filename,Speaker,Game_TextBlock,NoSpeaker_TextBlock\n";
-
+                //need to find how to output also to windows and I guess linux and mac.  Seems to be a way of doing this for whomever may want to use this an a utility.
+               // Console.Writeline("Paste folder directory)
+                //String s = Console.ReadLine();
+                 DirectoryInfo di = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\");
+                //DirectoryInfo di = new DirectoryInfo(@".\");
+                //string output = "Filename,Speaker,Game_TextBlock,NoSpeaker_TextBlock\n";
+                //string output = @"Filename|Speaker|Game_TextBlock|NoSpeaker_TextBlock\n";
+                string output = @"""Filename""|""Speaker""|""Game_TextBlock""|""NoSpeaker_TextBlock""\n";
                 DeleteOutputIfExists(di);
 
                 foreach (FileInfo fi in di.EnumerateFiles("*.Dat"))
                 {
-                    //string filenameOut = fi.DirectoryName + @"\out\" + fi.Name.Replace(".DAT", ".csv");
+                   
                     DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
-
+                   // DirectoryInfo dirOut = new DirectoryInfo(@".\out\");
                     //string replacedByteArray;
                     output += GetModifiedFile(fi);                    
                     WriteFile(fi.DirectoryName + @"\out\output.csv", output);
@@ -54,7 +61,7 @@ namespace FormatLegendOfHeroesScript
             }
             catch (Exception)
             {
-                Console.WriteLine("output.csv exists and is probably in use. Canno delete to overwrite.");
+                Console.WriteLine("output.csv exists and is probably in use. Cannot delete to overwrite.");
             }
           
         }
@@ -98,31 +105,39 @@ namespace FormatLegendOfHeroesScript
 
         private static string GetFileName(FileInfo fileInfo, string output)
         {
+            output += QUALIFIER;
             output += fileInfo.Name;
-            output += COMMA;
+            output += QUALIFIER;
+            output += DELIMITER;
             return output;
         }
 
         private static string GetSpeaker(string output, string line, int speakerIndex)
         {
+            output += QUALIFIER;
             output += speakerIndex > -1 ? line.Substring(0, speakerIndex + 1) : string.Empty;
-            output += COMMA;
+            output += QUALIFIER;
+            output += DELIMITER;
             return output;
         }
 
 
         private static string GetLine(string output, string line)
         {
+            output += QUALIFIER;
             output += line;
-            output += COMMA;
+            output += QUALIFIER;
+            output += DELIMITER;
             return output;
         }
 
-        private static string GetLineWithoutSpeaker(string replacedByteArray, string line, int speakerIndex)
+        private static string GetLineWithoutSpeaker(string output, string line, int speakerIndex)
         {
-            replacedByteArray += speakerIndex > -1 ? line.Substring(speakerIndex, line.Length - speakerIndex) : line;
-            replacedByteArray += COMMA;
-            return replacedByteArray;
+            output += QUALIFIER;
+            output += speakerIndex > -1 ? line.Substring(speakerIndex, line.Length - speakerIndex) : line;
+            output += QUALIFIER;
+            output += DELIMITER;
+            return output;
         }
 
         private static void WriteFile(string filenameOut, string output)

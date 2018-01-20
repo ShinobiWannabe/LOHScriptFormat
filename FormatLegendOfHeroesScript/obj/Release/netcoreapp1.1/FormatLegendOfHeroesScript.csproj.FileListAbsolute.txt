@@ -1,0 +1,9 @@
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\bin\Release\netcoreapp1.1\FormatLegendOfHeroesScript.deps.json
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\bin\Release\netcoreapp1.1\FormatLegendOfHeroesScript.runtimeconfig.json
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\bin\Release\netcoreapp1.1\FormatLegendOfHeroesScript.runtimeconfig.dev.json
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\bin\Release\netcoreapp1.1\FormatLegendOfHeroesScript.dll
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\bin\Release\netcoreapp1.1\FormatLegendOfHeroesScript.pdb
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Release\netcoreapp1.1\FormatLegendOfHeroesScript.AssemblyInfo.cs
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Release\netcoreapp1.1\FormatLegendOfHeroesScript.dll
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Release\netcoreapp1.1\FormatLegendOfHeroesScript.pdb
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Release\netcoreapp1.1\FormatLegendOfHeroesScript.csprojResolveAssemblyReference.cache

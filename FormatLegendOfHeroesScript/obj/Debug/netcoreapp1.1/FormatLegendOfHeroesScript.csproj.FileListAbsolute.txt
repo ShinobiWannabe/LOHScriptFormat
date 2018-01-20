@@ -7,3 +7,5 @@ c:\users\michael\documents\visual studio 2017\Projects\FormatLegendOfHeroesScrip
 c:\users\michael\documents\visual studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\bin\Debug\netcoreapp1.1\FormatLegendOfHeroesScript.pdb
 c:\users\michael\documents\visual studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Debug\netcoreapp1.1\FormatLegendOfHeroesScript.dll
 c:\users\michael\documents\visual studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Debug\netcoreapp1.1\FormatLegendOfHeroesScript.pdb
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Debug\netcoreapp1.1\FormatLegendOfHeroesScript.Properties.Resources.resources
+C:\Users\Michael\Documents\Visual Studio 2017\Projects\FormatLegendOfHeroesScript\FormatLegendOfHeroesScript\obj\Debug\netcoreapp1.1\FormatLegendOfHeroesScript.csproj.GenerateResource.Cache
