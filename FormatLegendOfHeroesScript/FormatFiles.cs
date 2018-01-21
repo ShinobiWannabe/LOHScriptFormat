@@ -30,23 +30,22 @@ namespace FormatLegendOfHeroesScript
                 // Console.Writeline("Paste folder directory)
                 //String s = Console.ReadLine();
                 DirectoryInfo di = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\");
-                //DirectoryInfo di = new DirectoryInfo(@".\");
-                //string output = "Filename,Speaker,Game_TextBlock,NoSpeaker_TextBlock\n";
-                //string output = @"Filename|Speaker|Game_TextBlock|NoSpeaker_TextBlock\n";
-                string columns = @"""Filename""|""Position""|""Speaker""|""Game_TextBlock""|""NoSpeaker_TextBlock""\n";
+             
+                List<Byte> output = new List<byte>();
+                //string columns = @"""Filename""|""Position""|""Speaker""|""NoSpeaker_TextBlock""";
+                string columns = @"""Filename""|""Position""|""FullTextBlock""|""Speaker""|""NoSpeaker_TextBlock""";
+
+                output.AddRange(System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(columns));
+                output.Add((byte)NEWLINE);
+
                 DeleteOutputIfExists(di);
-
-                //List<Byte> output = new List<Byte>();
-                //output.Add(columns.);
+                
+                DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
                 foreach (FileInfo fi in di.EnumerateFiles("*.Dat"))
-                {
-
-                    //DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
-                    // DirectoryInfo dirOut = new DirectoryInfo(@".\out\");
-                    //string replacedByteArray;
-                    SaveModifiedFile(fi);
-                    //WriteFile(fi.DirectoryName + @"\out\output.csv", output);
-                    // output = string.Empty;
+                {                   
+                    output= GetModifiedFile(output, fi);
+                    WriteFile(output, dirOut);
+                    output.Clear();                    
                 }
             }
             catch (Exception)
@@ -69,22 +68,15 @@ namespace FormatLegendOfHeroesScript
         }
 
         //While this is more complicated that dealing wth StreamReader, it allows me to get the positions. 
-        private void SaveModifiedFile(FileInfo fileInfo)
+        private List<Byte> GetModifiedFile(List<Byte> output, FileInfo fileInfo)
         {
-            List<Byte> output = new List<byte>();
-            //List<Byte[]> fsLines = new List<Byte[]>();
-
-
+           
             using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
             {
-
                 int speakerIndex = -1;
                 List<Byte> line = new List<Byte>();
-                //List<Byte> temp = new List<Byte>();
                 Boolean skippedFirst = false; //this alone removes tons of garbage from the .dat file
                 int fsPos = 0;
-                //int outputPos = 0;
-
                 while (fs.Position != fs.Length)
                 {
                     Byte fsByte = (byte)fs.ReadByte();
@@ -113,65 +105,39 @@ namespace FormatLegendOfHeroesScript
 
                             output = GetFileName(output, fileInfo);
                             output = GetPos(output, line, fsPos);
-                            //output = GetPos(output, fsPos - line.Length, fsPos, outputPos);
-                            output = GetSpeaker(output, line, speakerIndex);
-                            //line = GetLine(line, fsPos);
-                            //  output = GetLineWithoutSpeaker(output, line, speakerIndex);
+                           output = GetFullLine(output, line, fsPos);
+                            output = GetSpeaker(output, line, speakerIndex);                            
+                            output = GetLineWithoutSpeaker(output, line, speakerIndex);
 
-                            //line.AddRange(temp.ToArray());
-  }
+                        }
                         catch (Exception ex)
                         {
-
                             throw;
                         }
-                            output.Add((byte)NEWLINE);
+                        output.Add((byte)NEWLINE);
 
-                            //  output.AddRange(line.ToArray());
-                            //output.AddRange(output.ToArray());
-                            line.Clear();
-                            speakerIndex = -1;
-                      
+                        line.Clear();
+                        speakerIndex = -1;
+
                     }
 
                 }
             }
-            try
-            {
-
-
-                DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
-                using (FileStream fs = new FileStream(dirOut.FullName + @"\output.csv", FileMode.Append))
-                {
-
-                    fs.Write(output.ToArray(), 0, output.Count);
-                }
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-            //return output;
+           
+            return output;
         }
 
         private static List<Byte> GetFileName(List<Byte> output, FileInfo fileInfo)
         {
             try
             {
-
-
                 output.Add((Byte)QUALIFIER);
-
                 output.AddRange(System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(fileInfo.Name));
-
-                //output.Add(fileInfo.Name);
                 output.Add((Byte)QUALIFIER);
                 output.Add((Byte)DELIMITER);
             }
             catch (Exception ex)
             {
-
                 throw;
             }
             return output;
@@ -179,10 +145,8 @@ namespace FormatLegendOfHeroesScript
 
         private static List<Byte> GetSpeaker(List<byte> output, List<Byte> line, int speakerIndex)
         {
-
             try
             {
-                //line.Insert(0, (Byte)QUALIFIER);
                 output.Add((Byte)QUALIFIER);
                 output.AddRange(speakerIndex > -1 ? line.GetRange(0, speakerIndex + 1) : null);
                 output.Add((Byte)QUALIFIER);
@@ -195,122 +159,66 @@ namespace FormatLegendOfHeroesScript
             return output;
         }
 
-        private List<Byte> GetPos( List<Byte> output, List<Byte> line, int fsPos)
+        private List<Byte> GetPos(List<Byte> output, List<Byte> line, int fsPos)
         {
             output.Add((Byte)QUALIFIER);
             int x = fsPos - line.Count;
             Byte[] num = System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(x.ToString());
             output.AddRange(num);
-            //int x = fsPos - line.Count;
-            //output.AddRange( BitConverter.GetBytes(fsPos - line.Count));
             output.Add((Byte)QUALIFIER);
             output.Add((Byte)DELIMITER);
 
             return output;
         }
 
-        //private static List<Byte> GetFileName(FileInfo fileInfo, List<Byte> output, ref int pos)
-        //{
-        //    output[pos] = (byte)QUALIFIER;
-
-        //    //output += fileInfo.Name;
-        //    //output += QUALIFIER;
-        //    //output += DELIMITER;
-        //    return output;
-        //}
-
-
-        //private static string GetPos(string output, int pos)
-        //{
-        //    output += QUALIFIER;
-        //    output += pos.ToString();
-        //    output += QUALIFIER;
-        //    output += DELIMITER;
-        //    return output;
-        //}
-
-
-
-
-
-        //private static string GetSpeaker(string output, string line, int speakerIndex)
-        //{
-        //    output += QUALIFIER;
-        //    output += speakerIndex > -1 ? line.Substring(0, speakerIndex + 1) : string.Empty;
-        //    output += QUALIFIER;
-        //    output += DELIMITER;
-        //    return output;
-        //}
-
-
-     
-
-
-        //private static List<Byte> GetSpeaker(List<Byte> line, int speakerIndex, List<Byte> temp)
-        //{
-
-        //    try
-        //    {
-        //        //line.Insert(0, (Byte)QUALIFIER);
-        //        temp.Add((Byte)QUALIFIER);
-        //        temp.AddRange(speakerIndex > -1 ? line.GetRange(0, speakerIndex + 1) : null);
-        //        temp.Add((Byte)QUALIFIER);
-        //        temp.Add((Byte)DELIMITER);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        throw;
-        //    }
-        //    return temp;
-        //}
-
-        //private static string GetLine(string output, string line)
-        //{
-        //    output += QUALIFIER;
-        //    output += line;
-        //    output += QUALIFIER;
-        //    output += DELIMITER;
-        //    return output;
-        //}
-
-
-        private static List<Byte> GetLine(List<Byte> line, int pos)
+        private static List<Byte> GetFullLine(List<Byte> output, List<Byte> line, int pos)
         {
-            line.Insert(0, (Byte)QUALIFIER);
-            line.Add((Byte)QUALIFIER);
-            line.Add((Byte)DELIMITER);
-
-            return line;
+            output.Add((Byte)QUALIFIER);
+            output.AddRange(line);
+            output.Add((Byte)QUALIFIER);
+            output.Add((Byte)DELIMITER);
+            return output;
         }
-
-        private static string GetLineWithoutSpeaker(string output, string line, int speakerIndex)
+              
+        private static List<Byte> GetLineWithoutSpeaker(List<Byte> output, List<Byte> line, int speakerIndex)
         {
-            output += QUALIFIER;
-            output += speakerIndex > -1 ? line.Substring(speakerIndex, line.Length - speakerIndex) : line;
-            output += QUALIFIER;
-            output += DELIMITER;
+            output.Add((Byte)QUALIFIER);
+            output.AddRange(speakerIndex > -1 ? line.GetRange(speakerIndex, line.Count - speakerIndex) : null);
+            output.Add((Byte)QUALIFIER);
+            output.Add((Byte)DELIMITER);
             return output;
         }
 
-        private static void WriteFile(string filenameOut, string output)
+
+        private static void WriteFile(List<Byte> output, DirectoryInfo dirOut)
         {
-            using (FileStream fs = new FileStream(filenameOut, FileMode.Append))
-            using (StreamWriter sw = new StreamWriter(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
+            try
             {
-                sw.WriteLine(output);
+               
+                using (FileStream fs = new FileStream(dirOut.FullName + @"\output.csv", FileMode.Append))
+                {
+                    fs.Write(output.ToArray(), 0, output.Count);
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
             }
         }
 
-        //older
-        //private static void CreateFile(string filenameOut, string replacedByteArray)
-        //{
 
-        //    using (FileStream fs = new FileStream(filenameOut, FileMode.Create))
+
+        //private static void WriteFile(string output, string filenameOut )
+        //{
+        //    using (FileStream fs = new FileStream(filenameOut, FileMode.Append))
         //    using (StreamWriter sw = new StreamWriter(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
         //    {
-        //        sw.WriteLine(replacedByteArray);
+        //        sw.WriteLine(output);
         //    }
         //}
+
+
 
         ////Uses streamreader.  Cannot be used to get position due to characters not being consistent with byte length.
         //private static string GetModifiedFile(FileInfo fileInfo)
@@ -368,14 +276,7 @@ namespace FormatLegendOfHeroesScript
         //    return output;
         //}
 
-        //private static string GetFileName(FileInfo fileInfo, string output)
-        //{
-        //    output += QUALIFIER;
-        //    output += fileInfo.Name;
-        //    output += QUALIFIER;
-        //    output += DELIMITER;
-        //    return output;
-        //}
+       
 
 
     }
