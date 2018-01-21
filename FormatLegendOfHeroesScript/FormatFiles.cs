@@ -33,7 +33,7 @@ namespace FormatLegendOfHeroesScript
 
                 List<Byte> output = new List<byte>();
                 //string columns = @"""Filename""|""Position""|""Speaker""|""NoSpeaker_TextBlock""";
-                string columns = @"""Filename""|""Position""|""FullTextBlockLength""|""FullTextBlock""|""Speaker""|""NoSpeaker_TextBlock""";
+                string columns = @"""Filename""|""StartPosition""|""FullTextBlockByteLength""|""FullTextBlock""|""Speaker""|""NoSpeaker_TextBlock""";
 
                 output.AddRange(System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(columns));
                 output.Add((byte)NEWLINE);
@@ -173,7 +173,8 @@ namespace FormatLegendOfHeroesScript
         private List<Byte> GetFullLineLength(List<Byte> output, List<Byte> line)
         {
             output.Add((Byte)QUALIFIER);
-            Byte[] num = System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(line.Count.ToString());
+            //subtracting 2 here. Only want the length of the text between the starting marker 0x1E and the ending 0x1E.
+            Byte[] num = System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes((line.Count -2).ToString());
             output.AddRange(num);
             output.Add((Byte)QUALIFIER);
             output.Add((Byte)DELIMITER);
