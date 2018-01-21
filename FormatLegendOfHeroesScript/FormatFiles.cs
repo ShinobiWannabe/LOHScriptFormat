@@ -30,22 +30,22 @@ namespace FormatLegendOfHeroesScript
                 // Console.Writeline("Paste folder directory)
                 //String s = Console.ReadLine();
                 DirectoryInfo di = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\");
-             
+
                 List<Byte> output = new List<byte>();
                 //string columns = @"""Filename""|""Position""|""Speaker""|""NoSpeaker_TextBlock""";
-                string columns = @"""Filename""|""Position""|""FullTextBlock""|""Speaker""|""NoSpeaker_TextBlock""";
+                string columns = @"""Filename""|""Position""|""FullTextBlockLength""|""FullTextBlock""|""Speaker""|""NoSpeaker_TextBlock""";
 
                 output.AddRange(System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(columns));
                 output.Add((byte)NEWLINE);
 
                 DeleteOutputIfExists(di);
-                
+
                 DirectoryInfo dirOut = new DirectoryInfo(@".\bin\Debug\netcoreapp1.1\out\");
                 foreach (FileInfo fi in di.EnumerateFiles("*.Dat"))
-                {                   
-                    output= GetModifiedFile(output, fi);
+                {
+                    output = GetModifiedFile(output, fi);
                     WriteFile(output, dirOut);
-                    output.Clear();                    
+                    output.Clear();
                 }
             }
             catch (Exception)
@@ -70,7 +70,7 @@ namespace FormatLegendOfHeroesScript
         //While this is more complicated that dealing wth StreamReader, it allows me to get the positions. 
         private List<Byte> GetModifiedFile(List<Byte> output, FileInfo fileInfo)
         {
-           
+
             using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
             {
                 int speakerIndex = -1;
@@ -91,7 +91,6 @@ namespace FormatLegendOfHeroesScript
                         if (skippedFirst == false) //the beginning of every file has garbage.
                         {
                             line.Clear();
-
                             speakerIndex = -1;
                             skippedFirst = true;
                             continue;
@@ -99,14 +98,14 @@ namespace FormatLegendOfHeroesScript
 
                         speakerIndex = line.IndexOf((Byte)(0x04));
 
-
                         try
                         {
 
                             output = GetFileName(output, fileInfo);
                             output = GetPos(output, line, fsPos);
-                           output = GetFullLine(output, line, fsPos);
-                            output = GetSpeaker(output, line, speakerIndex);                            
+                            output = GetFullLineLength(output, line);
+                            output = GetFullLine(output, line, fsPos);
+                            output = GetSpeaker(output, line, speakerIndex);
                             output = GetLineWithoutSpeaker(output, line, speakerIndex);
 
                         }
@@ -123,7 +122,7 @@ namespace FormatLegendOfHeroesScript
 
                 }
             }
-           
+
             return output;
         }
 
@@ -148,11 +147,11 @@ namespace FormatLegendOfHeroesScript
             try
             {
                 output.Add((Byte)QUALIFIER);
-                output.AddRange(speakerIndex > -1 ? line.GetRange(0, speakerIndex + 1) : null);
+                output.AddRange(speakerIndex > -1 ? line.GetRange(0, speakerIndex + 1) : new List<Byte>());
                 output.Add((Byte)QUALIFIER);
                 output.Add((Byte)DELIMITER);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 throw;
             }
@@ -171,6 +170,17 @@ namespace FormatLegendOfHeroesScript
             return output;
         }
 
+        private List<Byte> GetFullLineLength(List<Byte> output, List<Byte> line)
+        {
+            output.Add((Byte)QUALIFIER);
+            Byte[] num = System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(line.Count.ToString());
+            output.AddRange(num);
+            output.Add((Byte)QUALIFIER);
+            output.Add((Byte)DELIMITER);
+
+            return output;
+        }
+
         private static List<Byte> GetFullLine(List<Byte> output, List<Byte> line, int pos)
         {
             output.Add((Byte)QUALIFIER);
@@ -179,11 +189,11 @@ namespace FormatLegendOfHeroesScript
             output.Add((Byte)DELIMITER);
             return output;
         }
-              
+
         private static List<Byte> GetLineWithoutSpeaker(List<Byte> output, List<Byte> line, int speakerIndex)
         {
             output.Add((Byte)QUALIFIER);
-            output.AddRange(speakerIndex > -1 ? line.GetRange(speakerIndex, line.Count - speakerIndex) : null);
+            output.AddRange(speakerIndex > -1 ? line.GetRange(speakerIndex, line.Count - speakerIndex) : new List<Byte>());
             output.Add((Byte)QUALIFIER);
             output.Add((Byte)DELIMITER);
             return output;
@@ -194,7 +204,7 @@ namespace FormatLegendOfHeroesScript
         {
             try
             {
-               
+
                 using (FileStream fs = new FileStream(dirOut.FullName + @"\output.csv", FileMode.Append))
                 {
                     fs.Write(output.ToArray(), 0, output.Count);
@@ -276,7 +286,7 @@ namespace FormatLegendOfHeroesScript
         //    return output;
         //}
 
-       
+
 
 
     }
