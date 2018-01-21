@@ -112,7 +112,8 @@ namespace FormatLegendOfHeroesScript
                         {
 
                             output = GetFileName(output, fileInfo);
-                            // output = GetPos(output, fsPos - line.Length, fsPos, outputPos);
+                            output = GetPos(output, line, fsPos);
+                            //output = GetPos(output, fsPos - line.Length, fsPos, outputPos);
                             output = GetSpeaker(output, line, speakerIndex);
                             //line = GetLine(line, fsPos);
                             //  output = GetLineWithoutSpeaker(output, line, speakerIndex);
@@ -154,71 +155,6 @@ namespace FormatLegendOfHeroesScript
             //return output;
         }
 
-        ////Uses streamreader.  Cannot be used to get position due to characters not being consistent with byte length.
-        //private static string GetModifiedFile(FileInfo fileInfo)
-        //{
-        //    string output = string.Empty;
-        //    using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
-        //    {
-        //        using (StreamReader sr = new StreamReader(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
-        //        {
-        //            int speakerIndex = -1;
-        //            string line = string.Empty;
-        //            Boolean skippedFirst = false; //this alone removes tons of garbage from the .dat file
-        //            int pos = 0;
-        //            while (!sr.EndOfStream)
-        //            {
-        //                char chr = (char)sr.Read();
-        //                pos++; //this is not going to work.  characters can be multiple characters.
-        //                line += chr;
-        //                speakerIndex = -1;
-
-        //               // if (chr == GAME_TEXTBLOCKEND)  //use this if something is blantantly wrong with the below check.
-        //                 if ( (char)((chr) & 0xF0) == (char)(0x00) && sr.Peek() ==  GAME_TEXTBLOCKEND) //0x1E's PREVIOUS byte seems to always follow the format of 0x0F, where the high byte is 0.  This removes lots of bogus shit.
-        //                {
-        //                    if(skippedFirst==false) //the beginning of every file has garbage.
-        //                    {
-        //                        line = string.Empty;
-        //                        speakerIndex = -1;
-        //                        skippedFirst = true;
-        //                        continue;
-        //                    }
-        //                    //maybe input a comma on 0x0401. which seems to be after the top of the text block indicating who is speaking. 
-        //                    //if (line.Contains((string)(0x0A00).ToString()))
-        //                    //{
-        //                    //    Console.Write("empty");
-        //                    //}
-        //                    speakerIndex = line.IndexOf((char)(0x04));
-
-        //                   // line.CopyTo(new Byte[])
-        //                    output = GetFileName(fileInfo, output);
-        //                    output = GetPos(output, pos - System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(line).Length);
-        //                    output = GetSpeaker(output, line, speakerIndex);
-        //                    output = GetLine(output, line);
-        //                    output = GetLineWithoutSpeaker(output, line, speakerIndex);
-
-        //                    output += NEWLINE;
-
-        //                    line = string.Empty;
-        //                    speakerIndex = -1;
-        //                }
-        //            }
-
-        //        }
-        //    }
-
-        //    return output;
-        //}
-
-        //private static string GetFileName(FileInfo fileInfo, string output)
-        //{
-        //    output += QUALIFIER;
-        //    output += fileInfo.Name;
-        //    output += QUALIFIER;
-        //    output += DELIMITER;
-        //    return output;
-        //}
-
         private static List<Byte> GetFileName(List<Byte> output, FileInfo fileInfo)
         {
             try
@@ -241,6 +177,37 @@ namespace FormatLegendOfHeroesScript
             return output;
         }
 
+        private static List<Byte> GetSpeaker(List<byte> output, List<Byte> line, int speakerIndex)
+        {
+
+            try
+            {
+                //line.Insert(0, (Byte)QUALIFIER);
+                output.Add((Byte)QUALIFIER);
+                output.AddRange(speakerIndex > -1 ? line.GetRange(0, speakerIndex + 1) : null);
+                output.Add((Byte)QUALIFIER);
+                output.Add((Byte)DELIMITER);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            return output;
+        }
+
+        private List<Byte> GetPos( List<Byte> output, List<Byte> line, int fsPos)
+        {
+            output.Add((Byte)QUALIFIER);
+            int x = fsPos - line.Count;
+            Byte[] num = System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(x.ToString());
+            output.AddRange(num);
+            //int x = fsPos - line.Count;
+            //output.AddRange( BitConverter.GetBytes(fsPos - line.Count));
+            output.Add((Byte)QUALIFIER);
+            output.Add((Byte)DELIMITER);
+
+            return output;
+        }
 
         //private static List<Byte> GetFileName(FileInfo fileInfo, List<Byte> output, ref int pos)
         //{
@@ -263,14 +230,7 @@ namespace FormatLegendOfHeroesScript
         //}
 
 
-        private byte[] GetPos(byte[] output, int pos)
-        {
-            //output += QUALIFIER;
-            //output += pos.ToString();
-            //output += QUALIFIER;
-            //output += DELIMITER;
-            return output;
-        }
+
 
 
         //private static string GetSpeaker(string output, string line, int speakerIndex)
@@ -283,23 +243,7 @@ namespace FormatLegendOfHeroesScript
         //}
 
 
-        private static List<Byte> GetSpeaker(List<byte> output, List<Byte> line, int speakerIndex)
-        {
-
-            try
-            {
-                //line.Insert(0, (Byte)QUALIFIER);
-                output.Add((Byte)QUALIFIER);
-                output.AddRange(speakerIndex > -1 ? line.GetRange(0, speakerIndex + 1) : null);
-                output.Add((Byte)QUALIFIER);
-                output.Add((Byte)DELIMITER);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            return output;
-        }
+     
 
 
         //private static List<Byte> GetSpeaker(List<Byte> line, int speakerIndex, List<Byte> temp)
@@ -366,6 +310,71 @@ namespace FormatLegendOfHeroesScript
         //    {
         //        sw.WriteLine(replacedByteArray);
         //    }
+        //}
+
+        ////Uses streamreader.  Cannot be used to get position due to characters not being consistent with byte length.
+        //private static string GetModifiedFile(FileInfo fileInfo)
+        //{
+        //    string output = string.Empty;
+        //    using (FileStream fs = new FileStream(fileInfo.FullName, FileMode.Open))
+        //    {
+        //        using (StreamReader sr = new StreamReader(fs, System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932)))
+        //        {
+        //            int speakerIndex = -1;
+        //            string line = string.Empty;
+        //            Boolean skippedFirst = false; //this alone removes tons of garbage from the .dat file
+        //            int pos = 0;
+        //            while (!sr.EndOfStream)
+        //            {
+        //                char chr = (char)sr.Read();
+        //                pos++; //this is not going to work.  characters can be multiple characters.
+        //                line += chr;
+        //                speakerIndex = -1;
+
+        //               // if (chr == GAME_TEXTBLOCKEND)  //use this if something is blantantly wrong with the below check.
+        //                 if ( (char)((chr) & 0xF0) == (char)(0x00) && sr.Peek() ==  GAME_TEXTBLOCKEND) //0x1E's PREVIOUS byte seems to always follow the format of 0x0F, where the high byte is 0.  This removes lots of bogus shit.
+        //                {
+        //                    if(skippedFirst==false) //the beginning of every file has garbage.
+        //                    {
+        //                        line = string.Empty;
+        //                        speakerIndex = -1;
+        //                        skippedFirst = true;
+        //                        continue;
+        //                    }
+        //                    //maybe input a comma on 0x0401. which seems to be after the top of the text block indicating who is speaking. 
+        //                    //if (line.Contains((string)(0x0A00).ToString()))
+        //                    //{
+        //                    //    Console.Write("empty");
+        //                    //}
+        //                    speakerIndex = line.IndexOf((char)(0x04));
+
+        //                   // line.CopyTo(new Byte[])
+        //                    output = GetFileName(fileInfo, output);
+        //                    output = GetPos(output, pos - System.Text.CodePagesEncodingProvider.Instance.GetEncoding(932).GetBytes(line).Length);
+        //                    output = GetSpeaker(output, line, speakerIndex);
+        //                    output = GetLine(output, line);
+        //                    output = GetLineWithoutSpeaker(output, line, speakerIndex);
+
+        //                    output += NEWLINE;
+
+        //                    line = string.Empty;
+        //                    speakerIndex = -1;
+        //                }
+        //            }
+
+        //        }
+        //    }
+
+        //    return output;
+        //}
+
+        //private static string GetFileName(FileInfo fileInfo, string output)
+        //{
+        //    output += QUALIFIER;
+        //    output += fileInfo.Name;
+        //    output += QUALIFIER;
+        //    output += DELIMITER;
+        //    return output;
         //}
 
 
